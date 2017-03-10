@@ -12,7 +12,7 @@
 # In[1]:
 
 from pylab import *
-get_ipython().magic('matplotlib inline')
+#get_ipython().magic('matplotlib inline')
 
 
 # * Import `caffe`, adding it to `sys.path` if needed. Make sure you've built pycaffe.
