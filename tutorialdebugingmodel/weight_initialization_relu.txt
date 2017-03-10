@@ -1,0 +1,50 @@
+
+require 'torch'
+require 'nn'
+Plot = require 'itorch.Plot'
+
+-- Create fake dataset
+x = torch.Tensor(10, 50):uniform(-1, 1)
+
+-- Build model
+model = nn.Sequential()
+    :add(nn.Linear(50, 500))
+    :add(nn.ReLU(true))
+
+for i = 2,20 do
+    model:add(nn.Linear(500, 500))
+         :add(nn.ReLU(true))
+end
+
+-- Xavier initialization
+for k,v in pairs(model:findModules('nn.Linear')) do
+    local n = v.weight:size(1)
+    v.weight:uniform(-math.sqrt(3/n),math.sqrt(3/n))
+end
+
+model:forward(x)
+
+-- Plot histogram of activations
+for i = 2, 20, 2 do
+    out = model.modules[i].output
+    plot = Plot():histogram(out, 100, 0, 1):draw()
+    plot:title(('Activation histogram: Layer %d'):format(i/2)):redraw()
+    plot:xaxis('Value'):yaxis('Number'):redraw()
+end
+
+-- MSR initialization
+for k,v in pairs(model:findModules('nn.Linear')) do
+    local n = v.weight:size(1)
+    v.weight:normal(0,1/math.sqrt(n/2))
+end
+
+x = torch.Tensor(10, 50)
+model:forward(x)
+
+-- Plot histogram of activations
+for i = 2, 20, 2 do
+    out = model.modules[i].output
+    plot = Plot():histogram(out, 100, 0, 1):draw()
+    plot:title(('Activation histogram: Layer %d'):format(i/2)):redraw()
+    plot:xaxis('Value'):yaxis('Number'):redraw()
+end
