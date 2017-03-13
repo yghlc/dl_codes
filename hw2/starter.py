@@ -149,21 +149,26 @@ optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
 
 def train(epoch):
     model.train()
+    average_loss = 0
     for batch_idx, (data, target) in enumerate(train_loader):
         if args.cuda:
             data, target = data.cuda(), target.cuda()
-        else:
-            data, target = Variable(data), Variable(target)
+
+        data, target = Variable(data), Variable(target)
         optimizer.zero_grad()
         output = model(data)
         # loss = F.nll_loss(output, target)   # is it true to use such a loss over cross-entropy loss?
         loss = F.cross_entropy(output, target)
         loss.backward()
         optimizer.step()
+        # print(loss.data)
+        average_loss += loss.data[0]
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.data[0]))
+    print('\n Total count: {}, Average loss: {:.6f}'.format(
+        len(train_loader.dataset),average_loss/len(train_loader.dataset)))
 
 def test(epoch):
     model.eval()
@@ -172,10 +177,11 @@ def test(epoch):
     for data, target in test_loader:
         if args.cuda:
             data, target = data.cuda(), target.cuda()
-        else:
-            data, target = Variable(data, volatile=True), Variable(target)
+
+        data, target = Variable(data, volatile=True), Variable(target)
         output = model(data)
-        test_loss += F.nll_loss(output, target).data[0]
+        # test_loss += F.nll_loss(output, target).data[0]
+        test_loss += F.cross_entropy(output, target).data[0]
         pred = output.data.max(1)[1] # get the index of the max log-probability
         correct += pred.eq(target.data).cpu().sum()
 
@@ -189,6 +195,8 @@ def test(epoch):
 for epoch in range(1, args.epochs + 1):
     train(epoch)
     test(epoch)
+
+# print training curve and test accuracy for at least 5 epoches
 
 
 time2 = timeit.default_timer()
