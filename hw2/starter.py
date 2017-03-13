@@ -33,12 +33,15 @@ args.cuda = not args.no_cuda and torch.cuda.is_available()
 
 print(args)
 
+# assign the random seed, it's better to set random seed based on time
 torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
+print('parameters for cuda: ',kwargs)
+
 # The output of torchvision datasets are PILImage images of range [0, 1].
 # We transform them to Tensors of normalized range [-1, 1]
 transform=transforms.Compose([transforms.ToTensor(),
@@ -59,10 +62,56 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         # TODO: define your network here
+        self.conv1 = nn.Conv2d(3, 6, kernel_size=5,stride=1)
+        self.bn1 = nn.BatchNorm2d(6)
+        self.relu1 = nn.ReLU()
+        self.pool1 = nn.MaxPool2d(kernel_size=4, stride=2)
+
+        self.conv2 = nn.Conv2d(6, 16, kernel_size=5, stride=1)
+        self.bn2 = nn.BatchNorm2d(16)
+        self.relu2 = nn.ReLU()
+        self.pool2 = nn.MaxPool2d(kernel_size=4, stride=2)
+
+        # the size of pool2 result is torch.Size([4, 16, 3, 3]), so is should be 3*3*16
+        self.fc1 = nn.Linear(3*3*16, 120)
+        self.relu_fc1 = nn.ReLU()
+        self.fc2 = nn.Linear(120, 84)
+        self.relu_fc2 = nn.ReLU()
+
+        self.fc3 = nn.Linear(84, 10)
+        self.relu_fc3 = nn.ReLU()
 
     def forward(self, x):
         # TODO
-        return
+
+        x = self.conv1(x)  # When a nn.Module is called, it will compute the result
+        # print('size of result in conv1: ',x.size())
+        x = self.bn1(x)
+        x = self.relu1(x)
+        x = self.pool1(x)
+
+        # print('result of pool1: ', x)
+        x = self.conv2(x)
+        x = self.bn2(x)
+        x = self.relu2(x)
+        # print('result of conv2: ', x)
+        x = self.pool2(x)
+        # print('result of pool2: ', x)
+
+        # print(x.size())
+
+        x = x.view(x.size(0), -1)
+
+        x = self.fc1(x)
+        # print('result of fc1: ', x)
+        x = self.relu_fc1(x)
+        x = self.fc2(x)
+        # print('result of fc2: ', x)
+        x = self.relu_fc2(x)
+        x = self.fc3(x)
+        # print('result of fc: ', x)
+        x = self.relu_fc3(x)
+        return x
 
 
 model = Net()
@@ -110,3 +159,5 @@ def test(epoch):
 for epoch in range(1, args.epochs + 1):
     train(epoch)
     test(epoch)
+
+
