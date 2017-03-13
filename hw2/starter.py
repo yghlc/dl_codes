@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import torchvision
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 
@@ -21,7 +22,7 @@ parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                     help='input batch size for testing (default: 1000)')
 parser.add_argument('--epochs', type=int, default=10, metavar='N',
                     help='number of epochs to train (default: 10)')
-parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                     help='learning rate (default: 0.01)')
 parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                     help='SGD momentum (default: 0.5)')
@@ -60,18 +61,38 @@ test_loader = torch.utils.data.DataLoader(testset, batch_size=4,
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
+###################################################
+# Let us show some of the training images, for fun.
+# functions to show an image
+# import matplotlib.pyplot as plt
+# import numpy as np
+# # %matplotlib inline
+# def imshow(img):
+#     img = img / 2 + 0.5 # unnormalize
+#     npimg = img.numpy()
+#     plt.imshow(np.transpose(npimg, (1,2,0)))
+#
+# # show some random training images
+# dataiter = iter(train_loader)
+# images, labels = dataiter.next()
+#
+# # print images
+# imshow(torchvision.utils.make_grid(images))
+# # print labels
+# print(' '.join('%5s'%classes[labels[j]] for j in range(4)))
+###################################################
 
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         # TODO: define your network here
         self.conv1 = nn.Conv2d(3, 6, kernel_size=5,stride=1)
-        self.bn1 = nn.BatchNorm2d(6)
+        # self.bn1 = nn.BatchNorm2d(6)
         self.relu1 = nn.ReLU()
         self.pool1 = nn.MaxPool2d(kernel_size=4, stride=2)
 
         self.conv2 = nn.Conv2d(6, 16, kernel_size=5, stride=1)
-        self.bn2 = nn.BatchNorm2d(16)
+        # self.bn2 = nn.BatchNorm2d(16)
         self.relu2 = nn.ReLU()
         self.pool2 = nn.MaxPool2d(kernel_size=4, stride=2)
 
@@ -82,28 +103,31 @@ class Net(nn.Module):
         self.relu_fc2 = nn.ReLU()
 
         self.fc3 = nn.Linear(84, 10)
-        self.relu_fc3 = nn.ReLU()
+        # self.relu_fc3 = nn.ReLU()
 
     def forward(self, x):
         # TODO
 
         x = self.conv1(x)  # When a nn.Module is called, it will compute the result
         # print('size of result in conv1: ',x.size())
-        x = self.bn1(x)
+        # x = self.bn1(x)
         x = self.relu1(x)
         x = self.pool1(x)
 
         # print('result of pool1: ', x)
         x = self.conv2(x)
-        x = self.bn2(x)
+        # x = self.bn2(x)
         x = self.relu2(x)
         # print('result of conv2: ', x)
         x = self.pool2(x)
         # print('result of pool2: ', x)
 
-        # print(x.size())
-
+        # x_size = x.size()
+        # print(x_size)
+        # print(x.size(0))
         x = x.view(x.size(0), -1)
+        # x_size = x.size()
+        # print(x_size)
 
         x = self.fc1(x)
         # print('result of fc1: ', x)
@@ -113,7 +137,7 @@ class Net(nn.Module):
         x = self.relu_fc2(x)
         x = self.fc3(x)
         # print('result of fc: ', x)
-        x = self.relu_fc3(x)
+        # x = self.relu_fc3(x)
         return x
 
 
@@ -128,10 +152,12 @@ def train(epoch):
     for batch_idx, (data, target) in enumerate(train_loader):
         if args.cuda:
             data, target = data.cuda(), target.cuda()
-        data, target = Variable(data), Variable(target)
+        else:
+            data, target = Variable(data), Variable(target)
         optimizer.zero_grad()
         output = model(data)
-        loss = F.nll_loss(output, target)   # is it true to use such a loss over cross-entropy loss? 
+        # loss = F.nll_loss(output, target)   # is it true to use such a loss over cross-entropy loss?
+        loss = F.cross_entropy(output, target)
         loss.backward()
         optimizer.step()
         if batch_idx % args.log_interval == 0:
@@ -146,7 +172,8 @@ def test(epoch):
     for data, target in test_loader:
         if args.cuda:
             data, target = data.cuda(), target.cuda()
-        data, target = Variable(data, volatile=True), Variable(target)
+        else:
+            data, target = Variable(data, volatile=True), Variable(target)
         output = model(data)
         test_loss += F.nll_loss(output, target).data[0]
         pred = output.data.max(1)[1] # get the index of the max log-probability
