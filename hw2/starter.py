@@ -9,6 +9,9 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 
+import timeit
+time1 = timeit.default_timer()
+
 # Training settings
 # for terminal use. In notebook, you can't parse arguments
 parser = argparse.ArgumentParser(description='ELEG5491 A2 Image Classification on CIFAR-10')
@@ -161,3 +164,5 @@ for epoch in range(1, args.epochs + 1):
     test(epoch)
 
 
+time2 = timeit.default_timer()
+print('cost time of whole process: %f\n'%(time2-time1))
