@@ -11,6 +11,12 @@ from torchvision import datasets, transforms
 from torch.autograd import Variable
 
 import timeit
+import matplotlib.pyplot as plt
+import numpy as np
+# uncomment in jupyter notebook
+# %matplotlib inline
+
+
 time1 = timeit.default_timer()
 
 # Training settings
@@ -80,6 +86,54 @@ classes = ('plane', 'car', 'bird', 'cat',
 # imshow(torchvision.utils.make_grid(images))
 # # print labels
 # print(' '.join('%5s'%classes[labels[j]] for j in range(4)))
+
+
+def draw_training_curve_and_accuarcy():
+    plt.figure(1)
+    epoch_index = list(range(1,len(training_error)+1))
+    color_linestyle = 'b-'
+    label = 'training error'
+    plt.plot(epoch_index,training_error,color_linestyle , label=label, linewidth=1.5)
+
+    color_linestyle = 'r-.'
+    label = 'test accuracy'
+    plt.plot(epoch_index,test_accuracy,color_linestyle , label=label, linewidth=1.5)
+
+    plt.xlabel("epoches ")
+    plt.ylabel("training error and test accuracy")
+    plt.title(" ELEG5491 A2 Image Classification on CIFAR-10 elevation")
+    # plt.ylim(0, 15000)
+    plt.legend()
+    # plt.show()
+    plt.savefig('training_curve_and_accuarcy.jpg')
+    pass
+
+
+# codes from tutorial 3:  Deep learning toolkits I
+def vis_square(data):
+    """Take an array of shape (n, height, width) or (n, height, width, 3)
+       and visualize each (height, width) thing in a grid of size approx. sqrt(n) by sqrt(n)"""
+
+    # normalize data for display
+    data = (data - data.min()) / (data.max() - data.min())
+
+    # force the number of filters to be square
+    n = int(np.ceil(np.sqrt(data.shape[0])))
+    padding = (((0, n ** 2 - data.shape[0]),
+                (0, 1), (0, 1))  # add some space between filters
+               + ((0, 0),) * (data.ndim - 3))  # don't pad the last dimension (if there is one)
+    data = np.pad(data, padding, mode='constant', constant_values=1)  # pad with ones (white)
+
+    # tile the filters into an image
+    data = data.reshape((n, n) + data.shape[1:]).transpose((0, 2, 1, 3) + tuple(range(4, data.ndim + 1)))
+    data = data.reshape((n * data.shape[1], n * data.shape[3]) + data.shape[4:])
+
+    plt.imshow(data)
+    plt.axis('off')
+    plt.savefig('weight.jpg')
+
+
+
 ###################################################
 
 class Net(nn.Module):
@@ -98,9 +152,13 @@ class Net(nn.Module):
 
         # the size of pool2 result is torch.Size([4, 16, 3, 3]), so is should be 3*3*16
         self.fc1 = nn.Linear(3*3*16, 120)
+        self.dropout1 = nn.Dropout()
         self.relu_fc1 = nn.ReLU()
+
         self.fc2 = nn.Linear(120, 84)
+        self.dropout2 = nn.Dropout()
         self.relu_fc2 = nn.ReLU()
+
 
         self.fc3 = nn.Linear(84, 10)
         # self.relu_fc3 = nn.ReLU()
@@ -131,9 +189,11 @@ class Net(nn.Module):
 
         x = self.fc1(x)
         # print('result of fc1: ', x)
+        x = self.dropout1(x)
         x = self.relu_fc1(x)
         x = self.fc2(x)
         # print('result of fc2: ', x)
+        x = self.dropout2(x)
         x = self.relu_fc2(x)
         x = self.fc3(x)
         # print('result of fc: ', x)
@@ -146,6 +206,9 @@ if args.cuda:
     model.cuda()
 
 optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+
+training_error = []
+test_accuracy = []
 
 def train(epoch):
     model.train()
@@ -170,6 +233,8 @@ def train(epoch):
     print('\n Total count: {}, Average loss: {:.6f}'.format(
         len(train_loader.dataset),average_loss/len(train_loader.dataset)))
 
+    training_error.append(average_loss/len(train_loader.dataset))
+
 def test(epoch):
     model.eval()
     test_loss = 0
@@ -191,13 +256,26 @@ def test(epoch):
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
 
+    test_accuracy.append(correct / len(test_loader.dataset))
+
 
 for epoch in range(1, args.epochs + 1):
     train(epoch)
     test(epoch)
 
+filters = model.conv1.weight.data.view(3*6,5,5)
+
+vis_square(filters.numpy())
+
 # print training curve and test accuracy for at least 5 epoches
+draw_training_curve_and_accuarcy()
+
+plt.show()
+
+
+
+
 
 
 time2 = timeit.default_timer()
-print('cost time of whole process: %f\n'%(time2-time1))
+print('cost time of whole process: %.2f minutes\n' % ((time2 - time1) / 60.0))
