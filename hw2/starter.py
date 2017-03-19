@@ -44,7 +44,11 @@ parser.add_argument('--conv1-width', type=int, default=6, metavar='N',
 # parser.add_argument('--pool-size', type=int, default=2, metavar='N',
 #                     help='the kernel size of pooling size, the size is pool-size*pool-size')
 parser.add_argument('--dropout-fc', action='store_true', default=False,
-                    help='adding drop after each fully connected layer')
+                    help='adding dropout after each fully connected layer')
+
+parser.add_argument('--batch-Normalize', action='store_true', default=False,
+                    help='adding batch normalization layer after each layer, '
+                         'except the very last layer for classification')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -58,6 +62,7 @@ in_momentum = args.momentum
 in_seed = args.seed
 in_log_interval = args.log_interval
 in_dropout = args.dropout_fc
+in_batchNormalize = args.batch_Normalize
 
 #the assinment ask set this to 6, change this see the super-efficiency of GPU acceleration
 in_conv1_width = args.conv1_width
@@ -162,27 +167,32 @@ class Net(nn.Module):
         super(Net, self).__init__()
         # TODO: define your network here
         self.conv1 = nn.Conv2d(3, in_conv1_width, kernel_size=5,stride=1)
-        # self.bn1 = nn.BatchNorm2d(6)
+        if in_batchNormalize:
+            self.bn1 = nn.BatchNorm2d(6)
         self.relu1 = nn.ReLU()
         self.pool1 = nn.MaxPool2d(kernel_size=in_pool_size, stride=2)
 
         self.conv2 = nn.Conv2d(in_conv1_width, 16, kernel_size=5, stride=1)
-        # self.bn2 = nn.BatchNorm2d(16)
+        if in_batchNormalize:
+            self.bn2 = nn.BatchNorm2d(16)
         self.relu2 = nn.ReLU()
         self.pool2 = nn.MaxPool2d(kernel_size=in_pool_size, stride=2)
 
         # the size of pool2 result is torch.Size([4, 16, 3, 3]), so is should be 3*3*16, when pooling kernel size is 4
         # the size of pool2 result is torch.Size([4, 16, 5, 5]), so is should be 5*5*16, when pooling kernel size is 2
         self.fc1 = nn.Linear(5*5*16, 120)
+        if in_batchNormalize:
+            self.bn_fc1 = nn.BatchNorm1d(120)
         if in_dropout:
             self.dropout1 = nn.Dropout()
         self.relu_fc1 = nn.ReLU()
 
         self.fc2 = nn.Linear(120, 84)
+        if in_batchNormalize:
+            self.bn_fc2 = nn.BatchNorm1d(84)
         if in_dropout:
             self.dropout2 = nn.Dropout()
         self.relu_fc2 = nn.ReLU()
-
 
         self.fc3 = nn.Linear(84, 10)
         # self.relu_fc3 = nn.ReLU()
@@ -192,13 +202,15 @@ class Net(nn.Module):
 
         x = self.conv1(x)  # When a nn.Module is called, it will compute the result
         # print('size of result in conv1: ',x.size())
-        # x = self.bn1(x)
+        if in_batchNormalize:
+            x = self.bn1(x)
         x = self.relu1(x)
         x = self.pool1(x)
 
         # print('result of pool1: ', x)
         x = self.conv2(x)
-        # x = self.bn2(x)
+        if in_batchNormalize:
+            x = self.bn2(x)
         x = self.relu2(x)
         # print('result of conv2: ', x)
         x = self.pool2(x)
@@ -212,11 +224,15 @@ class Net(nn.Module):
         # print(x_size)
 
         x = self.fc1(x)
+        if in_batchNormalize:
+            x = self.bn_fc1(x)
         # print('result of fc1: ', x)
         if in_dropout:
             x = self.dropout1(x)
         x = self.relu_fc1(x)
         x = self.fc2(x)
+        if in_batchNormalize:
+            x = self.bn_fc2(x)
         # print('result of fc2: ', x)
         if in_dropout:
             x = self.dropout2(x)
