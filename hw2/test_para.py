@@ -37,6 +37,14 @@ def output_commandString_from_args_list(args_list):
                 commands_str += args_str + ' ';
     return commands_str
 
+def get_name_by_adding_tail(basename,tail):
+
+    text = os.path.splitext(basename)
+    if len(text)<2:
+        outputlogMessage('ERROR: incorrect input file name: %s'%basename)
+        assert False
+    return text[0]+'_'+tail+text[1]
+
 def exec_command_args_list(args_list):
     """
     execute a command string
@@ -52,7 +60,15 @@ def exec_command_args_list(args_list):
     outputlogMessage('return codes: '+ str(returncode))
 
 def main():
+    arglist = ['starter.py', '--epochs','20','--momentum','0.9','--conv1-width', '6','--dropout-fc']
+    exec_command_args_list(arglist)
 
+
+    datetime_str =  time.strftime("%Y%m%d")+'_'+time.strftime("%H%M%S")
+    training_curve = 'training_curve_and_accuarcy.jpg'
+    cp_training_curve = get_name_by_adding_tail(training_curve,datetime_str)
+    arglist = ['cp', 'training_curve_and_accuarcy.jpg', 'training_curve_and_accuarcy.jpg'+training_curve]
+    exec_command_args_list(arglist)
 
 
     pass
