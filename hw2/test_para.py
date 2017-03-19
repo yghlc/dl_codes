@@ -67,7 +67,7 @@ def main():
     datetime_str =  time.strftime("%Y%m%d")+'_'+time.strftime("%H%M%S")
     training_curve = 'training_curve_and_accuarcy.jpg'
     cp_training_curve = get_name_by_adding_tail(training_curve,datetime_str)
-    arglist = ['cp', 'training_curve_and_accuarcy.jpg', cp_training_curve]
+    arglist = ['mv', 'training_curve_and_accuarcy.jpg', cp_training_curve]
     exec_command_args_list(arglist)
 
 
