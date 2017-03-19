@@ -124,7 +124,7 @@ def draw_training_curve_and_accuarcy():
     plt.title(" ELEG5491 A2 Image Classification on CIFAR-10 elevation")
     # plt.ylim(0, 15000)
     plt.legend()
-    plt.show()
+    # plt.show()
     plt.savefig('training_curve_and_accuarcy.jpg')
     pass
 
@@ -292,7 +292,7 @@ for epoch in range(1, in_epochs + 1):
     train(epoch)
     test(epoch)
 
-filters = model.conv1.weight.data.view(3*6,5,5)
+# filters = model.conv1.weight.data.view(3*6,5,5)
 # filters = model.conv1.weight.data.cpu().view(3*6,5,5)
 
 # vis_square(filters.numpy())
@@ -302,7 +302,7 @@ filters = model.conv1.weight.data.view(3*6,5,5)
 #     print('numpy conversion for FloatTensor is not supported in CUDA, so no filter learned showed')
 
 # print training curve and test accuracy for at least 5 epoches
-# draw_training_curve_and_accuarcy()
+draw_training_curve_and_accuarcy()
 
 # plt.show()
 
