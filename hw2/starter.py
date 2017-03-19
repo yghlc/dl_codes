@@ -22,9 +22,9 @@ time1 = timeit.default_timer()
 # Training settings
 # for terminal use. In notebook, you can't parse arguments
 parser = argparse.ArgumentParser(description='ELEG5491 A2 Image Classification on CIFAR-10')
-parser.add_argument('--batch-size', type=int, default=64, metavar='N',
+parser.add_argument('--batch-size', type=int, default=4, metavar='N',
                     help='input batch size for training (default: 64)')
-parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
+parser.add_argument('--test-batch-size', type=int, default=4, metavar='N',
                     help='input batch size for testing (default: 1000)')
 parser.add_argument('--epochs', type=int, default=10, metavar='N',
                     help='number of epochs to train (default: 10)')
@@ -38,13 +38,33 @@ parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
 parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                     help='how many batches to wait before logging training status')
+
+parser.add_argument('--conv1-width', type=int, default=6, metavar='N',
+                    help='the output channel of the first Conv layer')
+# parser.add_argument('--pool-size', type=int, default=2, metavar='N',
+#                     help='the kernel size of pooling size, the size is pool-size*pool-size')
+parser.add_argument('--dropout-fc', action='store_true', default=False,
+                    help='adding drop after each fully connected layer')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
 print(args)
+# setting argument for terminal
+in_train_batch_size = args.batch_size
+in_test_batch_size = args.test_batch_size
+in_epochs = args.epochs
+in_lr = args.lr
+in_momentum = args.momentum
+in_seed = args.seed
+in_log_interval = args.log_interval
+in_dropout = args.dropout_fc
+
+#the assinment ask set this to 6, change this see the super-efficiency of GPU acceleration
+in_conv1_width = args.conv1_width
+in_pool_size = 2 #args.pool_size need change codes to auto get the size of pooling result
 
 # assign the random seed, it's better to set random seed based on time
-torch.manual_seed(args.seed)
+torch.manual_seed(in_seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
@@ -58,11 +78,11 @@ transform=transforms.Compose([transforms.ToTensor(),
                               transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                              ])
 trainset = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
-train_loader = torch.utils.data.DataLoader(trainset, batch_size=4,
+train_loader = torch.utils.data.DataLoader(trainset, batch_size=in_train_batch_size,
                                           shuffle=True, num_workers=2)
 
 testset = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
-test_loader = torch.utils.data.DataLoader(testset, batch_size=4,
+test_loader = torch.utils.data.DataLoader(testset, batch_size=in_test_batch_size,
                                           shuffle=False, num_workers=2)
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
@@ -104,7 +124,7 @@ def draw_training_curve_and_accuarcy():
     plt.title(" ELEG5491 A2 Image Classification on CIFAR-10 elevation")
     # plt.ylim(0, 15000)
     plt.legend()
-    # plt.show()
+    plt.show()
     plt.savefig('training_curve_and_accuarcy.jpg')
     pass
 
@@ -131,6 +151,7 @@ def vis_square(data):
     plt.imshow(data)
     plt.axis('off')
     plt.savefig('weight.jpg')
+    # plt.show()
 
 
 
@@ -140,23 +161,26 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         # TODO: define your network here
-        self.conv1 = nn.Conv2d(3, 6, kernel_size=5,stride=1)
+        self.conv1 = nn.Conv2d(3, in_conv1_width, kernel_size=5,stride=1)
         # self.bn1 = nn.BatchNorm2d(6)
         self.relu1 = nn.ReLU()
-        self.pool1 = nn.MaxPool2d(kernel_size=4, stride=2)
+        self.pool1 = nn.MaxPool2d(kernel_size=in_pool_size, stride=2)
 
-        self.conv2 = nn.Conv2d(6, 16, kernel_size=5, stride=1)
+        self.conv2 = nn.Conv2d(in_conv1_width, 16, kernel_size=5, stride=1)
         # self.bn2 = nn.BatchNorm2d(16)
         self.relu2 = nn.ReLU()
-        self.pool2 = nn.MaxPool2d(kernel_size=4, stride=2)
+        self.pool2 = nn.MaxPool2d(kernel_size=in_pool_size, stride=2)
 
-        # the size of pool2 result is torch.Size([4, 16, 3, 3]), so is should be 3*3*16
-        self.fc1 = nn.Linear(3*3*16, 120)
-        self.dropout1 = nn.Dropout()
+        # the size of pool2 result is torch.Size([4, 16, 3, 3]), so is should be 3*3*16, when pooling kernel size is 4
+        # the size of pool2 result is torch.Size([4, 16, 5, 5]), so is should be 5*5*16, when pooling kernel size is 2
+        self.fc1 = nn.Linear(5*5*16, 120)
+        if in_dropout:
+            self.dropout1 = nn.Dropout()
         self.relu_fc1 = nn.ReLU()
 
         self.fc2 = nn.Linear(120, 84)
-        self.dropout2 = nn.Dropout()
+        if in_dropout:
+            self.dropout2 = nn.Dropout()
         self.relu_fc2 = nn.ReLU()
 
 
@@ -189,11 +213,13 @@ class Net(nn.Module):
 
         x = self.fc1(x)
         # print('result of fc1: ', x)
-        x = self.dropout1(x)
+        if in_dropout:
+            x = self.dropout1(x)
         x = self.relu_fc1(x)
         x = self.fc2(x)
         # print('result of fc2: ', x)
-        x = self.dropout2(x)
+        if in_dropout:
+            x = self.dropout2(x)
         x = self.relu_fc2(x)
         x = self.fc3(x)
         # print('result of fc: ', x)
@@ -202,10 +228,12 @@ class Net(nn.Module):
 
 
 model = Net()
+print(model)
 if args.cuda:
     model.cuda()
+print(model)
 
-optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+optimizer = optim.SGD(model.parameters(), lr=in_lr, momentum=in_momentum)
 
 training_error = []
 test_accuracy = []
@@ -221,12 +249,13 @@ def train(epoch):
         optimizer.zero_grad()
         output = model(data)
         # loss = F.nll_loss(output, target)   # is it true to use such a loss over cross-entropy loss?
+        # when use nll_loss as lost function, the loss value become NaN in few step, so it didn't work
         loss = F.cross_entropy(output, target)
         loss.backward()
         optimizer.step()
         # print(loss.data)
-        average_loss += loss.data[0]
-        if batch_idx % args.log_interval == 0:
+        average_loss += loss.data[0]*in_train_batch_size
+        if batch_idx % in_log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.data[0]))
@@ -259,21 +288,23 @@ def test(epoch):
     test_accuracy.append(correct / len(test_loader.dataset))
 
 
-for epoch in range(1, args.epochs + 1):
+for epoch in range(1, in_epochs + 1):
     train(epoch)
     test(epoch)
 
 filters = model.conv1.weight.data.view(3*6,5,5)
+# filters = model.conv1.weight.data.cpu().view(3*6,5,5)
 
-vis_square(filters.numpy())
+# vis_square(filters.numpy())
+# if args.cuda is False:
+#     vis_square(filters.numpy())
+# else:
+#     print('numpy conversion for FloatTensor is not supported in CUDA, so no filter learned showed')
 
 # print training curve and test accuracy for at least 5 epoches
-draw_training_curve_and_accuarcy()
+# draw_training_curve_and_accuarcy()
 
-plt.show()
-
-
-
+# plt.show()
 
 
 
