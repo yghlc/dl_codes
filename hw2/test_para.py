@@ -60,7 +60,7 @@ def exec_command_args_list(args_list):
     outputlogMessage('return codes: '+ str(returncode))
 
 def main():
-    arglist = ['./starter.py', '--epochs','10','--momentum','0.9','--conv1-width', '6','--dropout-fc']
+    arglist = ['./starter.py', '--epochs','20','--dropout-fc']
     exec_command_args_list(arglist)
 
 
