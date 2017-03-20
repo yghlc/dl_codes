@@ -10,6 +10,8 @@ import torchvision
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 
+import torch.nn.init as init
+
 import timeit
 import matplotlib.pyplot as plt
 import numpy as np
@@ -49,6 +51,10 @@ parser.add_argument('--dropout-fc', action='store_true', default=False,
 parser.add_argument('--batch-Normalize', action='store_true', default=False,
                     help='adding batch normalization layer after each layer, '
                          'except the very last layer for classification')
+
+parser.add_argument('--kaiming-weight-init', action='store_true', default=False,
+                    help='using kaiming_normal to initial the weight of each layer')
+
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -63,6 +69,7 @@ in_seed = args.seed
 in_log_interval = args.log_interval
 in_dropout = args.dropout_fc
 in_batchNormalize = args.batch_Normalize
+in_kaiming_weight_init = args.kaiming_weight_init
 
 #the assinment ask set this to 6, change this see the super-efficiency of GPU acceleration
 in_conv1_width = args.conv1_width
@@ -167,6 +174,8 @@ class Net(nn.Module):
         super(Net, self).__init__()
         # TODO: define your network here
         self.conv1 = nn.Conv2d(3, in_conv1_width, kernel_size=5,stride=1)
+        # init.kaiming_normal(self.conv1.weight, gain=1)
+        # init.constant(self.conv1.bias, 0.1)
         if in_batchNormalize:
             self.bn1 = nn.BatchNorm2d(6)
         self.relu1 = nn.ReLU()
@@ -301,7 +310,7 @@ def test(epoch):
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
 
-    test_accuracy.append(correct / len(test_loader.dataset))
+    test_accuracy.append(1.0*correct / len(test_loader.dataset))
 
 
 for epoch in range(1, in_epochs + 1):
