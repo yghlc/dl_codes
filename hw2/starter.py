@@ -177,14 +177,17 @@ class Net(nn.Module):
         super(Net, self).__init__()
         # TODO: define your network here
         self.conv1 = nn.Conv2d(3, in_conv1_width, kernel_size=5,stride=1)
-        # init.kaiming_normal(self.conv1.weight, gain=1)
-        # init.constant(self.conv1.bias, 0.1)
+        if in_kaiming_weight_init:
+            init.kaiming_normal(self.conv1.weight) # using fan_in, only consider the forward init
+            # init.constant(self.conv1.bias, 0.1)
         if in_batchNormalize:
             self.bn1 = nn.BatchNorm2d(6)
         self.relu1 = nn.ReLU()
         self.pool1 = nn.MaxPool2d(kernel_size=in_pool_size, stride=2)
 
         self.conv2 = nn.Conv2d(in_conv1_width, 16, kernel_size=5, stride=1)
+        if in_kaiming_weight_init:
+            init.kaiming_normal(self.conv2.weight)
         if in_batchNormalize:
             self.bn2 = nn.BatchNorm2d(16)
         self.relu2 = nn.ReLU()
@@ -193,6 +196,8 @@ class Net(nn.Module):
         # the size of pool2 result is torch.Size([4, 16, 3, 3]), so is should be 3*3*16, when pooling kernel size is 4
         # the size of pool2 result is torch.Size([4, 16, 5, 5]), so is should be 5*5*16, when pooling kernel size is 2
         self.fc1 = nn.Linear(5*5*16, 120)
+        if in_kaiming_weight_init:
+            init.kaiming_normal(self.fc1.weight)
         if in_batchNormalize:
             self.bn_fc1 = nn.BatchNorm1d(120)
         if in_dropout:
@@ -200,6 +205,8 @@ class Net(nn.Module):
         self.relu_fc1 = nn.ReLU()
 
         self.fc2 = nn.Linear(120, 84)
+        if in_kaiming_weight_init:
+            init.kaiming_normal(self.fc2.weight)
         if in_batchNormalize:
             self.bn_fc2 = nn.BatchNorm1d(84)
         if in_dropout:
