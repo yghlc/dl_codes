@@ -75,13 +75,15 @@ in_kaiming_weight_init = args.kaiming_weight_init
 in_conv1_width = args.conv1_width
 in_pool_size = 2 #args.pool_size need change codes to auto get the size of pooling result
 
+in_enable_cuda = args.cuda
+
 # assign the random seed, it's better to set random seed based on time
 torch.manual_seed(in_seed)
-if args.cuda:
+if in_enable_cuda:
     torch.cuda.manual_seed(args.seed)
 
 
-kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 1, 'pin_memory': True} if in_enable_cuda else {}
 print('parameters for cuda: ',kwargs)
 
 # The output of torchvision datasets are PILImage images of range [0, 1].
@@ -134,7 +136,7 @@ def draw_training_curve_and_accuarcy():
     plt.xlabel("epoches ")
     plt.ylabel("training error and test accuracy")
     plt.title(" ELEG5491 A2 Image Classification on CIFAR-10 elevation")
-    # plt.ylim(0, 15000)
+    plt.ylim(0, 2.5)
     plt.legend()
     # plt.show()
     plt.savefig('training_curve_and_accuarcy.jpg')
@@ -255,7 +257,7 @@ class Net(nn.Module):
 
 model = Net()
 print(model)
-if args.cuda:
+if in_enable_cuda:
     model.cuda()
 print(model)
 
@@ -268,7 +270,7 @@ def train(epoch):
     model.train()
     average_loss = 0
     for batch_idx, (data, target) in enumerate(train_loader):
-        if args.cuda:
+        if in_enable_cuda:
             data, target = data.cuda(), target.cuda()
 
         data, target = Variable(data), Variable(target)
@@ -295,7 +297,7 @@ def test(epoch):
     test_loss = 0
     correct = 0
     for data, target in test_loader:
-        if args.cuda:
+        if in_enable_cuda:
             data, target = data.cuda(), target.cuda()
 
         data, target = Variable(data, volatile=True), Variable(target)
@@ -323,7 +325,7 @@ filters = model.conv1.weight.data.cpu().view(3*6,5,5)
 vis_square(filters.numpy())
 
 # vis_square(filters.numpy())
-# if args.cuda is False:
+# if in_enable_cuda is False:
 #     vis_square(filters.numpy())
 # else:
 #     print('numpy conversion for FloatTensor is not supported in CUDA, so no filter learned showed')
