@@ -121,7 +121,7 @@ classes = ('plane', 'car', 'bird', 'cat',
 
 
 def draw_training_curve_and_accuarcy():
-    plt.figure(1)
+    plt.figure(2)
     epoch_index = list(range(1,len(training_error)+1))
     color_linestyle = 'b-'
     label = 'training error'
@@ -147,6 +147,7 @@ def vis_square(data):
        and visualize each (height, width) thing in a grid of size approx. sqrt(n) by sqrt(n)"""
 
     # normalize data for display
+    plt.figure(1)
     data = (data - data.min()) / (data.max() - data.min())
 
     # force the number of filters to be square
@@ -318,7 +319,8 @@ for epoch in range(1, in_epochs + 1):
     test(epoch)
 
 # filters = model.conv1.weight.data.view(3*6,5,5)
-# filters = model.conv1.weight.data.cpu().view(3*6,5,5)
+filters = model.conv1.weight.data.cpu().view(3*6,5,5)
+vis_square(filters.numpy())
 
 # vis_square(filters.numpy())
 # if args.cuda is False:
