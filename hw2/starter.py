@@ -178,6 +178,7 @@ class Net(nn.Module):
         # TODO: define your network here
         self.conv1 = nn.Conv2d(3, in_conv1_width, kernel_size=5,stride=1)
         if in_kaiming_weight_init:
+            # https://github.com/alykhantejani/nninit
             init.kaiming_normal(self.conv1.weight) # using fan_in, only consider the forward init
             # init.constant(self.conv1.bias, 0.1)
         if in_batchNormalize:
@@ -268,7 +269,7 @@ if in_enable_cuda:
     model.cuda()
 print(model)
 
-optimizer = optim.SGD(model.parameters(), lr=in_lr, momentum=in_momentum)
+optimizer = optim.SGD(model.parameters(), lr=in_lr, momentum=in_momentum,weight_decay=0.0005)
 
 training_error = []
 test_accuracy = []
