@@ -217,7 +217,7 @@ class Net(nn.Module):
         self.relu_fc2 = nn.ReLU()
 
         self.fc3 = nn.Linear(84, 10)
-        self.relu_fc3 = nn.ReLU()
+        # self.relu_fc3 = nn.ReLU()
 
     def forward(self, x):
         # TODO
@@ -263,7 +263,7 @@ class Net(nn.Module):
         x = self.relu_fc2(x)
         x = self.fc3(x)
         # print('result of fc: ', x)
-        x = self.relu_fc3(x)
+        # x = self.relu_fc3(x)
         return x
 
 
