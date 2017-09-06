@@ -185,6 +185,7 @@ class Net(nn.Module):
             self.bn1 = nn.BatchNorm2d(6)
         self.relu1 = nn.ReLU()
         self.pool1 = nn.MaxPool2d(kernel_size=in_pool_size, stride=2)
+        self.pool1_relu = nn.ReLU()
 
         self.conv2 = nn.Conv2d(in_conv1_width, 16, kernel_size=5, stride=1)
         if in_kaiming_weight_init:
@@ -193,6 +194,7 @@ class Net(nn.Module):
             self.bn2 = nn.BatchNorm2d(16)
         self.relu2 = nn.ReLU()
         self.pool2 = nn.MaxPool2d(kernel_size=in_pool_size, stride=2)
+        self.pool2_relu=nn.ReLU()
 
         # the size of pool2 result is torch.Size([4, 16, 3, 3]), so is should be 3*3*16, when pooling kernel size is 4
         # the size of pool2 result is torch.Size([4, 16, 5, 5]), so is should be 5*5*16, when pooling kernel size is 2
@@ -226,6 +228,7 @@ class Net(nn.Module):
             x = self.bn1(x)
         x = self.relu1(x)
         x = self.pool1(x)
+        x = self.pool1_relu(x)
 
         # print('result of pool1: ', x)
         x = self.conv2(x)
@@ -234,6 +237,7 @@ class Net(nn.Module):
         x = self.relu2(x)
         # print('result of conv2: ', x)
         x = self.pool2(x)
+        x = self.pool2_relu(x)
         # print('result of pool2: ', x)
 
         # x_size = x.size()
