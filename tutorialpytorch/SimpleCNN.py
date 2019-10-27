@@ -59,7 +59,7 @@ def train(epoch):
         loss = criterion(outputs, targets)
         if batch_index % 10 == 0:
             print('epoch {}  batch {}/{}  loss {:.3f}'.format(
-                epoch, batch_index, len(train_loader), loss.data[0]))
+                epoch, batch_index, len(train_loader), loss.data))
 
         # Backward
         optimizer.zero_grad()  # Set parameter gradients to zero
