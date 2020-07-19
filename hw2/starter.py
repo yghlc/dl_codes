@@ -315,7 +315,7 @@ def test(epoch):
         data, target = Variable(data, volatile=True), Variable(target)
         output = model(data)
         # test_loss += F.nll_loss(output, target).data[0]
-        test_loss += F.cross_entropy(output, target).data[0]
+        test_loss += F.cross_entropy(output, target).item()
         pred = output.data.max(1)[1] # get the index of the max log-probability
         correct += pred.eq(target.data).cpu().sum()
 
