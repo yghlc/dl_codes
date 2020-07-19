@@ -294,11 +294,11 @@ def train(epoch):
         loss.backward()
         optimizer.step()
         # print(loss.data)
-        average_loss += loss.data[0]*in_train_batch_size
+        average_loss += loss.item()*in_train_batch_size
         if batch_idx % in_log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.data[0]))
+                100. * batch_idx / len(train_loader), loss.item()))
     print('\n Total count: {}, Average loss: {:.6f}'.format(
         len(train_loader.dataset),average_loss/len(train_loader.dataset)))
 
